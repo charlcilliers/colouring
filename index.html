@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Colouring Book</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Colouring">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#e8f0fa">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{
+  --bg:#e8f0fa;--panel:#ffffff;--ink:#1c2747;--muted:#5b6788;--line:#cfdcee;--warn:#e8413a;
+  --lift:0 1px 2px rgba(28,39,71,.10),0 6px 18px rgba(28,39,71,.12);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#10172a;--panel:#1a2340;--ink:#eef2fb;--muted:#9aa6c4;--line:#2b3657;
+  --lift:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);}}
+:root[data-theme="dark"]{--bg:#10172a;--panel:#1a2340;--ink:#eef2fb;--muted:#9aa6c4;--line:#2b3657;
+  --lift:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font-family:ui-rounded,"SF Pro Rounded","Nunito","Varela Round",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation;
+  overflow:hidden;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit}
+button:focus-visible,label:focus-within{outline:3px solid #4895ef;outline-offset:2px}
+.view{height:100%;display:flex;flex-direction:column}
+.view[hidden]{display:none}
+
+/* Gallery */
+.ghead{padding:22px 22px 6px;max-width:1100px;width:100%;margin:0 auto}
+#logo{margin:0;font-size:clamp(34px,8vw,56px);font-weight:900;letter-spacing:-.03em;line-height:1}
+#logo span{display:inline-block}
+.ghead p{margin:8px 0 0;color:var(--muted);font-size:16px}
+.grid{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 22px 28px;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:18px;align-content:start;
+  max-width:1100px;width:100%;margin:0 auto}
+.card{appearance:none;border:0;background:var(--panel);border-radius:22px;padding:10px 10px 12px;
+  box-shadow:var(--lift);cursor:pointer;display:flex;flex-direction:column;gap:10px;text-align:left;
+  transition:transform .12s ease}
+.card:active{transform:scale(.96)}
+.card svg{width:100%;height:auto;aspect-ratio:1;border-radius:14px;background:#fff;display:block;pointer-events:none}
+.card b{font-size:16px;padding:0 6px}
+
+/* Editor */
+.bar{display:flex;align-items:center;gap:8px;padding:10px 12px 6px}
+.bar h2{flex:1;margin:0;font-size:19px;font-weight:800;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn{appearance:none;border:0;background:var(--panel);height:44px;min-width:44px;padding:0 16px;border-radius:22px;
+  font-weight:800;font-size:16px;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  box-shadow:var(--lift);cursor:pointer;transition:background .15s,color .15s}
+.btn:disabled{opacity:.35}
+.btn.warn{background:var(--warn);color:#fff}
+.btn .ic{font-size:20px;line-height:1}
+.stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:6px 12px}
+#paper{background:#fff;border-radius:18px;box-shadow:var(--lift);touch-action:none;display:block}
+#paper [data-i]{transition:fill .18s ease;cursor:pointer}
+@media (prefers-reduced-motion:reduce){#paper [data-i],.card,.sw{transition:none}}
+
+.palette{padding:8px 12px 14px;display:flex;flex-wrap:wrap;justify-content:center;gap:9px;max-width:760px;width:100%;margin:0 auto}
+.sw{appearance:none;width:42px;height:42px;border-radius:50%;border:0;padding:0;position:relative;flex:none;cursor:pointer;
+  box-shadow:inset 0 -4px 0 rgba(0,0,0,.18),inset 0 0 0 1.5px rgba(0,0,0,.12);transition:transform .12s ease}
+.sw.on{transform:translateY(-5px) scale(1.08);box-shadow:inset 0 -4px 0 rgba(0,0,0,.18),0 0 0 3px var(--bg),0 0 0 6px var(--ink)}
+.sw.eraser{background:linear-gradient(135deg,transparent 44%,#e8413a 44%,#e8413a 56%,transparent 56%),#fff}
+.sw.custom{background:conic-gradient(#e63946,#f7b538,#ffe066,#52b788,#4cc9f0,#4895ef,#7b2cbf,#f72585,#e63946);overflow:hidden}
+.sw.custom input{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;cursor:pointer}
+@media (max-width:420px){.bar h2{visibility:hidden}.btn{padding:0 13px}.sw{width:38px;height:38px}.palette{gap:8px}}
+
+/* Save fallback sheet */
+#sheet{position:fixed;inset:0;background:rgba(10,15,30,.6);display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
+#sheet[hidden]{display:none}
+#sheet .box{background:var(--panel);border-radius:22px;padding:16px;max-width:520px;width:100%;text-align:center;box-shadow:var(--lift)}
+#sheet img{width:100%;border-radius:14px;display:block;-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
+#sheet p{margin:14px 4px;font-size:16px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<section class="view" id="gallery">
+  <header class="ghead">
+    <h1 id="logo">Colouring Book</h1>
+    <p>Pick a picture to colour in.</p>
+  </header>
+  <div class="grid" id="grid"></div>
+</section>
+
+<section class="view" id="editor" hidden>
+  <div class="bar">
+    <button class="btn" id="back" aria-label="All pictures"><span class="ic">‹</span>All</button>
+    <h2 id="title"></h2>
+    <button class="btn" id="undo" aria-label="Undo" disabled><span class="ic">↶</span></button>
+    <button class="btn" id="clear">Clear</button>
+    <button class="btn" id="save">Save</button>
+  </div>
+  <div class="stage" id="stage"></div>
+  <div class="palette" id="palette" role="radiogroup" aria-label="Colours"></div>
+</section>
+
+<div id="sheet" hidden>
+  <div class="box">
+    <img id="sheetImg" alt="Your coloured picture">
+    <p>Press and hold the picture, then choose “Save to Photos”.</p>
+    <button class="btn" id="sheetClose">Done</button>
+  </div>
+</div>
+
+<script>
+(() => {
+const INK = '#1c2747';
+const f = n => +(+n).toFixed(1);
+const C = (x,y,r) => `<circle cx="${f(x)}" cy="${f(y)}" r="${r}"/>`;
+const E = (x,y,rx,ry) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}"/>`;
+const R = (x,y,w,h,r=0) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}"/>`;
+const P = d => `<path d="${d}"/>`;
+const G = p => `<polygon points="${p}"/>`;
+const STAR = (cx,cy,o,i,n=5) => G(Array.from({length:n*2},(_,k)=>{const a=Math.PI*k/n-Math.PI/2,r=k%2?i:o;return f(cx+r*Math.cos(a))+','+f(cy+r*Math.sin(a));}).join(' '));
+const CLOUD = (x,y) => P(`M${x} ${y}a20 20 0 0 1 35-10a25 25 0 0 1 45 10a18 18 0 0 1 0 36h-80a18 18 0 0 1 0-36z`);
+const BG = R(0,0,400,400);
+const petals = Array.from({length:8},(_,k)=>C(200+48*Math.cos(k*Math.PI/4),140+48*Math.sin(k*Math.PI/4),30));
+
+const DRAWINGS = [
+ {id:'house',name:'Cosy house',regions:[BG,C(330,70,38),CLOUD(50,90),R(0,300,400,100),G('175,330 225,330 250,400 150,400'),
+   R(245,110,30,70),G('70,195 200,95 330,195'),R(90,190,220,140),R(175,250,50,80,6),C(215,292,5),R(110,215,45,45),R(245,215,45,45)],
+  lines:'M132.5 215V260M110 237.5H155M267.5 215V260M245 237.5H290'},
+ {id:'cat',name:'Cat',regions:[BG,R(0,320,400,80),P('M270 300C340 300 350 220 320 180C315 172 300 178 305 188C325 225 320 280 265 280Z'),
+   E(200,260,85,75),E(200,280,45,40),E(165,330,25,15),E(235,330,25,15),G('130,115 140,45 185,90'),G('270,115 260,45 215,90'),
+   G('143,100 147,65 170,88'),G('257,100 253,65 230,88'),C(200,145,70),E(175,140,10,14),E(225,140,10,14),G('192,165 208,165 200,175')],
+  lines:'M200 175Q190 188 180 182M200 175Q210 188 220 182M150 170L105 160M150 178L105 182M250 170L295 160M250 178L295 182'},
+ {id:'fish',name:'Under the sea',regions:[BG,P('M0 340Q100 320 200 340T400 335V400H0Z'),P('M60 345C40 300 80 270 55 220C75 250 90 290 75 345Z'),
+   P('M340 340C360 290 320 260 350 210C330 240 315 290 325 340Z'),STAR(260,362,22,10),C(90,120,10),C(70,85,7),C(95,55,12),
+   G('275,200 350,140 340,200 350,260'),P('M170 140Q210 80 260 150Z'),P('M190 255Q200 300 235 262Z'),E(200,200,95,65),
+   P('M225 142Q240 200 225 258L245 250Q258 200 245 150Z'),C(145,185,14),C(142,185,6)],
+  lines:'M170 160Q185 200 170 240M108 210Q118 215 125 208'},
+ {id:'flower',name:'Flower pot',regions:[BG,C(40,40,30),R(0,380,400,20),P('M195 300C195 250 205 220 200 180L210 180C215 220 205 250 205 300Z'),
+   P('M200 260C170 250 145 225 140 205C170 205 195 225 200 260Z'),P('M205 240C235 230 260 205 265 185C235 185 210 205 205 240Z'),
+   ...petals,C(200,140,30),G('145,325 255,325 240,395 160,395'),R(135,300,130,25,4)],
+  lines:'M40 84V100M84 40H100M72 72L83 83'},
+ {id:'rocket',name:'Rocket',regions:[BG,STAR(60,70,16,7),STAR(330,60,12,5),STAR(350,300,14,6),STAR(130,180,10,4),STAR(300,190,9,4),
+   C(70,330,55),C(50,315,10),C(90,350,8),P('M170 300Q200 390 230 300Z'),P('M185 300Q200 355 215 300Z'),
+   G('165,230 125,300 165,290'),G('235,230 275,300 235,290'),R(165,150,70,150),R(165,250,70,18),
+   P('M165 150Q170 80 200 55Q230 80 235 150Z'),C(200,190,20)],lines:''},
+ {id:'butterfly',name:'Butterfly',regions:[BG,P('M0 360Q50 340 100 360T200 360T300 360T400 360V400H0Z'),
+   P('M195 190C150 90 60 60 55 130C50 190 120 210 195 205Z'),P('M205 190C250 90 340 60 345 130C350 190 280 210 205 205Z'),
+   P('M195 205C130 210 90 260 110 300C135 335 185 280 195 225Z'),P('M205 205C270 210 310 260 290 300C265 335 215 280 205 225Z'),
+   C(110,130,20),C(290,130,20),C(140,270,14),C(260,270,14),C(155,170,10),C(245,170,10),E(200,215,10,60),C(200,145,14),C(170,90,7),C(230,90,7)],
+  lines:'M195 135Q185 105 170 90M205 135Q215 105 230 90'},
+ {id:'tree',name:'Apple tree',regions:[BG,C(60,60,30),CLOUD(270,70),P('M0 300Q100 250 200 300T400 290V400H0Z'),
+   P('M180 360L185 230L215 230L220 360Z'),
+   P('M130 230C90 230 85 175 120 165C115 115 165 95 190 115C210 80 270 95 270 135C310 140 320 200 285 220C290 245 240 255 225 235C200 255 160 250 150 230C145 232 138 232 130 230Z'),
+   C(160,170,11),C(225,140,11),C(255,195,11),C(190,210,11),C(205,172,11),C(250,355,11),C(80,340,8),C(330,350,8)],
+  lines:'M250 344Q252 336 258 334'},
+ {id:'car',name:'Little car',regions:[BG,C(330,70,35),R(0,300,400,100),R(20,355,50,10),R(130,355,50,10),R(240,355,50,10),R(350,355,50,10),
+   P('M120 200L150 150L260 150L295 200Z'),R(60,200,290,75,18),G('135,198 157,160 200,160 200,198'),G('210,198 210,160 255,160 280,198'),
+   E(338,225,7,11),R(64,215,10,18,3),R(215,215,18,6,3),C(130,280,32),C(285,280,32),C(130,280,13),C(285,280,13)],
+  lines:'M205 200V270'}
+];
+
+const PALETTE = ['#e63946','#f4845f','#f7b538','#ffe066','#b5e48c','#52b788','#2d6a4f','#4cc9f0','#4895ef','#3a0ca3',
+  '#7b2cbf','#c77dff','#ff85a1','#f72585','#8d5524','#c68642','#e0ac69','#ffdbac','#adb5bd','#495057','#212529'];
+const WHITE = '#ffffff';
+
+// ---------- storage ----------
+const KEY = 'colourbook-v1';
+let store = {fills:{}, colour:PALETTE[0]};
+try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.fills) store = s; } catch(e) {}
+const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e) {} };
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch(e) {}
+
+// ---------- rendering ----------
+function svgFor(d, fills, opts={}) {
+  const regs = d.regions.map((s,i) => s.replace(/^<(\w+)/, `<$1 data-i="${i}" style="fill:${fills[i]||WHITE}"`)).join('');
+  const size = opts.size ? ` width="${opts.size}" height="${opts.size}"` : '';
+  const id = opts.id ? ` id="${opts.id}"` : '';
+  return `<svg${id} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"${size} role="img" aria-label="${d.name}">`+
+    `<g stroke="${INK}" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">${regs}</g>`+
+    (d.lines ? `<path d="${d.lines}" fill="none" stroke="${INK}" stroke-width="4" stroke-linecap="round" pointer-events="none"/>` : '')+
+    `</svg>`;
+}
+
+const $ = id => document.getElementById(id);
+const gallery=$('gallery'), editor=$('editor'), grid=$('grid'), stage=$('stage'), palette=$('palette');
+const undoBtn=$('undo'), clearBtn=$('clear');
+
+// colourful title
+(() => { const el=$('logo'); let n=0; el.innerHTML = [...el.textContent].map(ch => ch===' ' ? ' ' :
+  `<span style="color:${['#e63946','#f7b538','#52b788','#4895ef','#7b2cbf','#f72585'][n++%6]}">${ch}</span>`).join(''); })();
+
+function renderGallery() {
+  grid.innerHTML = DRAWINGS.map(d => `<button class="card" data-id="${d.id}">${svgFor(d, store.fills[d.id]||[])}<b>${d.name}</b></button>`).join('');
+}
+grid.addEventListener('click', e => { const c = e.target.closest('.card'); if (c) openDrawing(c.dataset.id); });
+
+// ---------- editor ----------
+let active = null, history = [];
+const fills = () => (store.fills[active.id] ||= []);
+
+function openDrawing(id) {
+  active = DRAWINGS.find(d => d.id === id);
+  history = []; undoBtn.disabled = true; disarm();
+  $('title').textContent = active.name;
+  stage.innerHTML = svgFor(active, fills(), {id:'paper'});
+  gallery.hidden = true; editor.hidden = false;
+  requestAnimationFrame(fit);
+}
+function closeDrawing() { editor.hidden = true; gallery.hidden = false; renderGallery(); }
+$('back').addEventListener('click', closeDrawing);
+
+function fit() {
+  const p = $('paper'); if (!p) return;
+  const s = Math.max(140, Math.min(stage.clientWidth - 24, stage.clientHeight - 8));
+  p.style.width = p.style.height = s + 'px';
+}
+addEventListener('resize', fit);
+addEventListener('orientationchange', () => setTimeout(fit, 250));
+
+function setRegion(i, colour) {
+  const el = stage.querySelector(`[data-i="${i}"]`);
+  if (el) el.style.fill = colour;
+}
+
+let down = null;
+stage.addEventListener('pointerdown', e => { down = {x:e.clientX, y:e.clientY}; });
+stage.addEventListener('pointerup', e => {
+  if (!down) return;
+  const moved = Math.hypot(e.clientX-down.x, e.clientY-down.y); down = null;
+  if (moved > 14) return;
+  const t = (document.elementFromPoint(e.clientX, e.clientY) || e.target).closest('[data-i]');
+  if (!t) return;
+  const i = +t.dataset.i, arr = fills(), prev = arr[i] || WHITE, next = store.colour;
+  if (prev.toLowerCase() === next.toLowerCase()) return;
+  history.push({i, prev}); undoBtn.disabled = false;
+  arr[i] = next; setRegion(i, next); persist();
+});
+stage.addEventListener('pointercancel', () => { down = null; });
+
+undoBtn.addEventListener('click', () => {
+  const h = history.pop(); if (!h) return;
+  if (h.all) { store.fills[active.id] = h.all; stage.innerHTML = svgFor(active, fills(), {id:'paper'}); fit(); }
+  else { fills()[h.i] = h.prev; setRegion(h.i, h.prev); }
+  undoBtn.disabled = !history.length; persist();
+});
+
+let armTimer = null;
+function disarm() { clearTimeout(armTimer); clearBtn.classList.remove('warn'); clearBtn.textContent = 'Clear'; clearBtn.dataset.armed = ''; }
+clearBtn.addEventListener('click', () => {
+  if (!clearBtn.dataset.armed) {
+    clearBtn.dataset.armed = '1'; clearBtn.classList.add('warn'); clearBtn.textContent = 'Sure?';
+    armTimer = setTimeout(disarm, 2500); return;
+  }
+  disarm();
+  if (!fills().some(Boolean)) return;
+  history.push({all:[...fills()]}); undoBtn.disabled = false;
+  store.fills[active.id] = []; stage.innerHTML = svgFor(active, [], {id:'paper'}); fit(); persist();
+});
+
+// ---------- palette ----------
+function selectColour(c, btn) {
+  store.colour = c; persist();
+  palette.querySelectorAll('.sw').forEach(s => { s.classList.remove('on'); s.setAttribute('aria-checked','false'); });
+  if (btn) { btn.classList.add('on'); btn.setAttribute('aria-checked','true'); }
+}
+function buildPalette() {
+  let html = PALETTE.map(c => `<button class="sw" role="radio" aria-checked="false" aria-label="Colour ${c}" data-c="${c}" style="background:${c}"></button>`).join('');
+  html += `<button class="sw eraser" role="radio" aria-checked="false" aria-label="Eraser" data-c="${WHITE}"></button>`;
+  html += `<label class="sw custom" role="radio" aria-checked="false" aria-label="Pick any colour" id="customSw"><input type="color" id="customIn" value="#4cc9f0"></label>`;
+  palette.innerHTML = html;
+  palette.addEventListener('click', e => { const b = e.target.closest('button.sw'); if (b) selectColour(b.dataset.c, b); });
+  const cs = $('customSw'), ci = $('customIn');
+  const useCustom = () => { cs.style.background = ci.value; selectColour(ci.value, cs); };
+  ci.addEventListener('input', useCustom); ci.addEventListener('change', useCustom);
+  const match = palette.querySelector(`button.sw[data-c="${store.colour}"]`);
+  if (match) selectColour(store.colour, match);
+  else { ci.value = store.colour; cs.style.background = store.colour; selectColour(store.colour, cs); }
+}
+
+// ---------- save picture ----------
+$('save').addEventListener('click', async () => {
+  const btn = $('save'); btn.disabled = true;
+  try {
+    const img = new Image();
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgFor(active, fills(), {size:1200}));
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+    const cv = document.createElement('canvas'); cv.width = cv.height = 1200;
+    const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0,0,1200,1200); ctx.drawImage(img,0,0,1200,1200);
+    const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+    const file = new File([blob], active.name.replace(/\s+/g,'-').toLowerCase() + '.png', {type:'image/png'});
+    let shared = false;
+    try {
+      if (navigator.canShare && navigator.canShare({files:[file]})) { await navigator.share({files:[file]}); shared = true; }
+    } catch(err) { if (err && err.name === 'AbortError') shared = true; }
+    if (!shared) { $('sheetImg').src = cv.toDataURL('image/png'); $('sheet').hidden = false; }
+  } catch(e) { console.error(e); }
+  btn.disabled = false;
+});
+$('sheetClose').addEventListener('click', () => { $('sheet').hidden = true; });
+
+// ---------- start ----------
+buildPalette(); renderGallery();
+
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
+})();
+</script>
+</body>
+</html>
